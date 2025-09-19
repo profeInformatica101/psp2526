@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Concurrencia y Procesos en Java — Guía rápida</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { scroll-behavior: smooth; }
+    code { font-size: 0.95rem; }
+    .method { white-space: nowrap; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="#">Java · Concurrencia y Procesos</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div id="nav" class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#concurrencia">Concurrencia</a></li>
+        <li class="nav-item"><a class="nav-link" href="#runtime">Runtime</a></li>
+        <li class="nav-item"><a class="nav-link" href="#process">Process</a></li>
+        <li class="nav-item"><a class="nav-link" href="#processbuilder">ProcessBuilder</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-5">
+
+  <!-- Concurrencia en Java -->
+  <section id="concurrencia" class="mb-5">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <h1 class="mb-3">Concurrencia en Java</h1>
+        <p class="lead">
+          La concurrencia permite ejecutar múltiples tareas de forma solapada, ya sea en un único núcleo mediante cambio de contexto
+          o en varios núcleos en paralelo. En Java, la base son los <strong>hilos</strong> (<code>Thread</code>) y el paquete
+          <code>java.util.concurrent</code>, que ofrecen <em>executors</em>, <em>futures</em>, colas bloqueantes,
+          sincronizadores y utilidades de alto nivel.
+        </p>
+        <ul>
+          <li><strong>Modelo</strong>: cada proceso de la JVM puede crear múltiples hilos que comparten memoria.</li>
+          <li><strong>Buenas prácticas</strong>: evitar condiciones de carrera, usar inmutabilidad, contenedores concurrentes
+              y <em>executors</em> en lugar de crear hilos a mano.</li>
+          <li><strong>Bloqueos y coordinación</strong>: <code>synchronized</code>, <code>Lock</code>, <code>Semaphore</code>,
+              <code>CountDownLatch</code>, <code>CompletableFuture</code>, etc.</li>
+        </ul>
+        <p>
+          En esta guía nos centramos en cómo la JVM interactúa con el <em>sistema operativo</em> para lanzar procesos externos,
+          medirlos, redirigir su E/S y gestionarlos de forma segura.
+        </p>
+      </div>
+      <div class="col-lg-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Mapa mental rápido</h5>
+            <ul class="mb-0">
+              <li><code>Runtime</code> = puerta a recursos del entorno de la JVM.</li>
+              <li><code>ProcessBuilder</code> = configurar y lanzar procesos nativos.</li>
+              <li><code>Process</code> = controlar un proceso ya en ejecución.</li>
+              <li>E/S: <code>getInputStream()</code>, <code>inheritIO()</code>, redirecciones.</li>
+              <li>Control: <code>waitFor()</code>, <code>isAlive()</code>, <code>destroy()</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr class="my-4">
+  </section>
+
+  <!-- Runtime -->
+  <section id="runtime" class="mb-5">
+    <div class="d-flex align-items-center mb-2">
+      <h2 class="me-3">Clase <code>Runtime</code></h2>
+      <a class="btn btn-sm btn-outline-primary"
+         href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runtime.html" target="_blank" rel="noopener">
+        Docs oficiales
+      </a>
+    </div>
+    <p>
+      <code>Runtime</code> es un <em>singleton</em> accesible con <code>Runtime.getRuntime()</code>. Expone operaciones
+      para interactuar con el entorno donde corre la JVM: memoria, procesos externos, ganchos de apagado, etc.
+    </p>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Método</th>
+            <th>Funcionalidad básica</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="method"><code>getRuntime()</code></td>
+            <td>Obtiene la instancia única de <code>Runtime</code>.</td>
+            <td>Patrón singleton.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>availableProcessors()</code></td>
+            <td>Número de CPU lógicas disponibles para la JVM.</td>
+            <td>Útil para dimensionar <em>thread pools</em>.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>freeMemory()</code>, <code>totalMemory()</code>, <code>maxMemory()</code></td>
+            <td>Estadísticas de memoria del heap.</td>
+            <td>Para diagnosticar consumo y límites del heap.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>gc()</code></td>
+            <td>Solicitud (no garantizada) de recolección de basura.</td>
+            <td>No fuerces GC en producción salvo diagnóstico.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>exec(...)</code></td>
+            <td>Lanza un proceso nativo y devuelve <code>Process</code>.</td>
+            <td>Se prefiere <code>ProcessBuilder</code> por claridad/flexibilidad.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>addShutdownHook(Thread)</code></td>
+            <td>Registra tareas a ejecutar al apagarse la JVM.</td>
+            <td>Para liberar recursos, cerrar logs, etc.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>halt(int)</code></td>
+            <td>Termina la JVM inmediatamente.</td>
+            <td>Uso excepcional; no ejecuta <em>shutdown hooks</em>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Process -->
+  <section id="process" class="mb-5">
+    <div class="d-flex align-items-center mb-2">
+      <h2 class="me-3">Clase <code>Process</code></h2>
+      <a class="btn btn-sm btn-outline-primary"
+         href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Process.html" target="_blank" rel="noopener">
+        Docs oficiales
+      </a>
+    </div>
+    <p>
+      <code>Process</code> representa y controla un proceso nativo iniciado por <code>ProcessBuilder.start()</code> o
+      <code>Runtime.exec()</code>. Permite leer su salida, escribir en su entrada, esperar a que termine, consultar su
+      código de salida y finalizarlo.
+    </p>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Método</th>
+            <th>¿Para qué sirve?</th>
+            <th>Notas de uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="method"><code>getInputStream()</code>, <code>getErrorStream()</code>, <code>getOutputStream()</code></td>
+            <td>Leer STDOUT/STDERR del proceso y escribir en STDIN.</td>
+            <td>Consume la salida para evitar bloqueos por buffers.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>waitFor()</code>, <code>waitFor(timeout, unit)</code></td>
+            <td>Bloquea hasta que termine (con o sin tiempo máximo).</td>
+            <td>Combínalo con lectura en hilos/async si hay mucha salida.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>isAlive()</code>, <code>exitValue()</code></td>
+            <td>Estado de vida y código de salida si ya terminó.</td>
+            <td><code>exitValue()</code> lanza excepción si sigue vivo.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>destroy()</code>, <code>destroyForcibly()</code></td>
+            <td>Solicita terminar el proceso (suave / forzado).</td>
+            <td>Usa forzado solo si no responde al cierre normal.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>pid()</code>, <code>info()</code></td>
+            <td>Identificador del proceso y metadatos (cmd, tiempos, etc.).</td>
+            <td><code>info()</code> devuelve <code>ProcessHandle.Info</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ProcessBuilder -->
+  <section id="processbuilder" class="mb-5">
+    <div class="d-flex align-items-center mb-2">
+      <h2 class="me-3">Clase <code>ProcessBuilder</code></h2>
+      <a class="btn btn-sm btn-outline-primary"
+         href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ProcessBuilder.html" target="_blank" rel="noopener">
+        Docs oficiales
+      </a>
+      <a class="btn btn-sm btn-outline-secondary ms-2"
+         href="https://docs.oracle.com/en/java/javase/21/core/creating-process.html" target="_blank" rel="noopener">
+        Guía: Crear procesos
+      </a>
+    </div>
+    <p>
+      <code>ProcessBuilder</code> configura los <em>atributos</em> (comando, directorio de trabajo, entorno, redirecciones)
+      para lanzar uno o varios procesos. Con <code>start()</code> obtienes un <code>Process</code> listo para controlar.
+    </p>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Método / atributo</th>
+            <th>Funcionalidad</th>
+            <th>Ejemplo/Comentarios</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="method"><code>new ProcessBuilder(cmd...)</code> / <code>command()</code></td>
+            <td>Define el ejecutable y sus argumentos.</td>
+            <td><code>new ProcessBuilder("ls","-la")</code></td>
+          </tr>
+          <tr>
+            <td class="method"><code>directory(File)</code></td>
+            <td>Establece el directorio de trabajo del proceso.</td>
+            <td><code>pb.directory(new File("/tmp"))</code></td>
+          </tr>
+          <tr>
+            <td class="method"><code>environment()</code></td>
+            <td>Mapa mutable de variables de entorno.</td>
+            <td><code>pb.environment().put("MODE","dev")</code></td>
+          </tr>
+          <tr>
+            <td class="method"><code>redirectErrorStream(boolean)</code></td>
+            <td>Fusiona STDERR en STDOUT.</td>
+            <td>Simplifica la lectura secuencial de mensajes.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>redirectInput/Output/Error(...)</code> y <code>Redirect</code></td>
+            <td>Redirige E/S a ficheros, hereda o descarta.</td>
+            <td><code>Redirect.INHERIT</code>, <code>Redirect.DISCARD</code>, <code>Redirect.to(file)</code></td>
+          </tr>
+          <tr>
+            <td class="method"><code>inheritIO()</code></td>
+            <td>El proceso usa la misma consola que la JVM.</td>
+            <td>Útil para ver la salida “en vivo”.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>start()</code></td>
+            <td>Crea y arranca el proceso con los atributos definidos.</td>
+            <td>Devuelve <code>Process</code>.</td>
+          </tr>
+          <tr>
+            <td class="method"><code>startPipeline(List&lt;ProcessBuilder&gt;)</code></td>
+            <td>Encadena procesos conectando su E/S (tuberías).</td>
+            <td>Ej.: <code>grep | sort | uniq</code>-like en Java.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card border-0 shadow-sm my-4">
+      <div class="card-body">
+        <h5 class="card-title">Ejemplo mínimo</h5>
+        <pre class="mb-0"><code class="language-java">ProcessBuilder pb = new ProcessBuilder("echo", "Hola mundo");
+pb.redirectErrorStream(true).inheritIO();
+Process p = pb.start();
+int code = p.waitFor();</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-muted">
+    <hr>
+    <p class="small mb-2">Este documento es una guía docente. Revisa siempre la documentación oficial para detalles y cambios de API.</p>
+  </footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
