@@ -2,6 +2,9 @@
 
 Este documento amplía tus apuntes en **.md** con código listo para usar y las actividades **1.2, 1.3, 1.4 y 1.5**. Está pensado para Linux/macOS (bash) y Windows (PowerShell/CMD), indicando alternativas cuando proceda.
 
+https://profeinformatica101.github.io/psp2526/ud1/
+
+
 ---
 
 ## 0) Requisitos y cómo compilar
