@@ -18,8 +18,6 @@ free -h            # Memoria
 df -h              # Espacio en disco
 ```
 
-📌 **Reflexión**: ¿qué limitaciones de hardware afectan a la concurrencia real vs. aparente?  
-
 ---
 
 ## 2. Procesos en ejecución
@@ -46,9 +44,6 @@ jobs               # Ver procesos de la shell
 fg %1              # Traer al primer plano
 kill -9 <PID>      # Finalizar un proceso
 ```
-
-📌 **Reflexión**: ¿cómo gestiona Linux varios procesos aunque tengamos 1 sola CPU? Relaciónalo con *cambio de contexto* y *PCB*.  
-
 ---
 
 ## 4. Servicios en Linux
@@ -94,8 +89,6 @@ chmod, chown, chgrp # Cambiar permisos y propietarios
    ```  
    (consume E/S de disco).  
 4. Usa `top` para observar cómo el sistema gestiona ambos procesos.  
-
-📌 **Conclusión**: aquí se ve cómo el SO intercala procesos CPU-bound y E/S-bound, relacionándolo con *concurrencia*.  
 
 ---
 
