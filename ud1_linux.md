@@ -1,4 +1,5 @@
-# 📝 Prácticas RA1 – Introducción a Linux y Procesos (UD01)
+# 📝 Prácticas RA1 – Introducción a Linux y Procesos (UD01) 
+# Realiza fork, crea una carpeta UD1 donde guardes
 
 ## 🎯 Objetivo general
 - Familiarizarse con Linux como entorno de ejecución.  
